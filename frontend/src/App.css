@@ -1,0 +1,16 @@
+
+.custom-stroke {
+  -webkit-text-stroke: 2px rgba(0, 0, 255, 0.486); /* Outline thickness and color */
+  color: transparent; /* Fully transparent text */
+}
+
+.custom-circle {
+  border: 2px rgba(0, 0, 255, 0.21) solid; /* Outline thickness and color */
+  background: transparent; /* Fully transparent text */
+  border-radius: 50%;
+}
+.custom-small-circle {
+  border: 2px rgba(0, 0, 0, 0.504) solid; /* Outline thickness and color */
+  background: transparent; /* Fully transparent text */
+  border-radius: 50%;
+}
