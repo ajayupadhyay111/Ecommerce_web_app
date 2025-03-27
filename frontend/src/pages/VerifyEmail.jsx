@@ -1,4 +1,5 @@
-import { API } from "@/api/api";
+import { API } from "@/api/axios";
+import { setCredentials } from "@/store/features/auth/authSlice";
 import { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
@@ -48,11 +49,14 @@ export default function VerifyEmail() {
     let OTP = otp.join("");
     try {
       const response = await API.post(`/verify-email/${token}`,{OTP});
-      dispatch(setCredentials({...userInfo,[isVerified]:true}));
+      dispatch(setCredentials({...userInfo,isVerified:true}));
       navigate("/login")
       toast.success(response.data.message);
       localStorage.removeItem("emailVerificationToken")
     } catch (error) {
+      if(error?.response?.data.message === "Invalid Token"){
+        navigate("/register")
+      }
      toast.error(error?.response?.data.message||error.message)
     }
   };

@@ -1,55 +1,52 @@
-import {  useState } from "react";
-import user from "../assets/user.png";
-import { FaEyeSlash, FaEye, FaLock, FaUserAlt, FaGoogle } from "react-icons/fa";
-import { MdEmail } from "react-icons/md";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { googleAuth, login } from "@/api/api";
-import GoogleIcon from "../assets/google.svg";
-import FacebookIcon from "../assets/facebook.svg";
-import LinkedInIcon from "../assets/linkedin.svg";
-import { useGoogleLogin } from "@react-oauth/google";
 import { useDispatch } from "react-redux";
+import { useGoogleLogin } from "@react-oauth/google";
 import { setAccessToken, setCredentials } from "@/store/features/auth/authSlice";
+import { googleAuth, login } from "@/api/UserRelatedAPI";
+import toast from "react-hot-toast";
+import { FaEyeSlash, FaEye } from "react-icons/fa";
 
 const Login = () => {
-  const [focusField, setFocusField] = useState(null);
-  const [passwordHidden, setPasswordHidden] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
-  console.log("login")
-  const navigate = useNavigate();
+
   const onSubmit = async (data) => {
     try {
       setIsLoading(true);
       const response = await login(data);
       dispatch(setCredentials(response.data.user));
       dispatch(setAccessToken(response.data.accessToken));
-      console.log("first")
-      toast.success(response?.data.message);
+      toast.success("Successfully logged in!");
       navigate("/");
     } catch (error) {
-      toast(error?.response?.data.message || error?.message);
+      toast.error(error?.response?.data.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // google login functionality is written below
   const responseGoogle = async (authResult) => {
     try {
       const response = await googleAuth(authResult.code);
-      dispatch(setCredentials(response.data.user))
+      console.log(response)
+      dispatch(setCredentials(response.data.user));
       dispatch(setAccessToken(response.data.accessToken));
+      toast.success("Successfully logged in with Google!");
       navigate("/");
     } catch (error) {
-      console.log("error while requesting google code ", error);
+      console.log(error)
+      toast.error("Google login failed");
     }
   };
 
@@ -58,130 +55,142 @@ const Login = () => {
     onError: responseGoogle,
     flow: "auth-code",
   });
+
   return (
-    <div
-      className="w-full h-[95vh]  flex justify-center items-center"
-      onClick={() => {
-        setFocusField(null);
-      }}
-    >
-      <div className="w-[500px] shadow-2xl h-[470px] flex justify-center flex-col items-center">
-        <img src={user} alt="user" className="w-24 h-24 mt-5" />
-        <h1 className="font-semibold uppercase text-4xl">Welcome</h1>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className=""
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div
-            className={`relative h-[65px] ${
-              focusField === "email"
-                ? "border-b-[2px] border-[#21CBCA]"
-                : "border-b-[1px]  border-gray-700"
-            }`}
-          >
-            <div className="absolute bottom-0 z-10 flex justify-center items-center gap-3 px-2 py-1">
-              <MdEmail
-                className={`${
-                  focusField === "email" ? "text-[#21CBCA]" : "text-gray-700"
-                } transition-all duration-100`}
-              />
-              <input
-                type="email"
-                required
-                className="outline-none p-1 text-gray-800 font-semibold"
-                readOnly={focusField === "email" ? false : true}
-                onFocus={() => setFocusField("email")}
-                onBlur={() => setFocusField(null)}
-                placeholder="Email"
-                {...register("email", {
-                  required: "Email is required",
-                  pattern: /^\S+@\S+$/i,
-                })}
-              />
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-blue-600">
+          Welcome Back
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          Sign in to your account to continue shopping
+        </p>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
+              <div className="mt-1">
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black"
+                  {...register("email", {
+                    required: "Email is required",
+                    pattern: {
+                      value: /^\S+@\S+$/i,
+                      message: "Please enter a valid email",
+                    },
+                  })}
+                />
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="mt-1 relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black"
+                  {...register("password", {
+                    required: "Password is required",
+                    minLength: {
+                      value: 6,
+                      message: "Password must be at least 6 characters",
+                    },
+                  })}
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <FaEye className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <FaEyeSlash className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+                {errors.password && (
+                  <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                  Remember me
+                </label>
+              </div>
+
+              <div className="text-sm">
+                <Link to="/forgot-password" className="font-medium text-black hover:text-gray-800">
+                  Forgot password?
+                </Link>
+              </div>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50"
+              >
+                {isLoading ? "Signing in..." : "Sign in"}
+              </button>
+            </div>
+          </form>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-3">
+              <button
+                onClick={() => googleLogin()}
+                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-blue-50"
+              >
+                <img
+                  className="h-5 w-5 mr-2"
+                  src="https://www.svgrepo.com/show/475656/google-color.svg"
+                  alt="Google logo"
+                />
+                <span>Continue with Google</span>
+              </button>
             </div>
           </div>
 
-          <div
-            className={`relative h-[65px] ${
-              focusField === "password"
-                ? "border-b-[2px] border-[#21CBCA]"
-                : "border-b-[1px]  border-gray-700"
-            }`}
-          >
-            <div className="absolute bottom-0 z-10 flex justify-center items-center gap-3 px-2 py-1">
-              <FaLock
-                className={`${
-                  focusField === "password" ? "text-[#21CBCA]" : "text-gray-700"
-                } transition-all duration-100`}
-              />
-              <input
-                type={passwordHidden ? "password" : "text"}
-                className="outline-none p-1 text-gray-800 font-semibold"
-                readOnly={focusField === "password" ? false : true}
-                onFocus={() => setFocusField("password")}
-                onBlur={() => setFocusField(null)}
-                placeholder="Password"
-                required
-                {...register("password", {
-                  required: "Password is requird",
-                  minLength: {
-                    value: 6,
-                    message: "Password must be at least 6 characters",
-                  },
-                })}
-              />
-              {passwordHidden ? (
-                <FaEyeSlash
-                  onClick={() => setPasswordHidden((prev) => !prev)}
-                  className={`transition-all duration-100`}
-                />
-              ) : (
-                <FaEye onClick={() => setPasswordHidden((prev) => !prev)} />
-              )}
-            </div>
-          </div>
-          {errors.email ? (
-            <p className="text-red-500">{errors.email.message}</p>
-          ) : errors.password ? (
-            <p className="text-red-500">{errors.password.message}</p>
-          ) : (
-            ""
-          )}
-          <div className="w-[270px] flex justify-end mt-1 underline ">
-            <Link to={"/forgot-password"} className="active:text-blue-500">
-              Forgot Password
-            </Link>
-          </div>
-          <button
-            type="submit"
-            className="w-[270px] mt-3 text-white bg-[#21cbca] border-none px-3 py-2 rounded-lg font-semibold"
-          >
-            Sign In
-          </button>
-          <p className=" text-sm text-gray-500">
+          <p className="mt-6 text-center text-sm text-gray-600">
             Don't have an account?{" "}
-            <Link to="/register" className="text-blue-500">
-              SignUp
+            <Link to="/register" className="font-medium text-black hover:text-gray-800">
+              Create an account
             </Link>
           </p>
-        </form>
-        <div className="relative w-1/2 mt-5">
-          <hr />
-          <span className="absolute -top-[10px] left-[46%] text-gray-500 bg-white text-sm">
-            OR
-          </span>
-        </div>
-        <div className="flex gap-9 my-5">
-          <span>
-            <img src={FacebookIcon} alt="" />
-          </span>
-          <span  onClick={googleLogin}>
-            <img src={GoogleIcon} alt="" />
-          </span>
-          <span>
-            <img src={LinkedInIcon} alt="" />
-          </span>
         </div>
       </div>
     </div>

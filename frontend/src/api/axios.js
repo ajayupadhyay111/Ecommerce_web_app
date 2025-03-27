@@ -1,14 +1,10 @@
 import axios from "axios";
+import toast from "react-hot-toast";
 
 export const API = axios.create({
   baseURL: "http://localhost:4000/api",
   withCredentials: true,
 });
-
-export const login = (data) => API.post("/login", data);
-export const registerUser = (data) => API.post("/register", data);
-export const refreshToken = () => API.post("/refresh");
-export const googleAuth = (code)=>API.get(`/google?code=${code}`)
 
 API.interceptors.response.use(
   (response) => response,
@@ -26,8 +22,11 @@ API.interceptors.response.use(
         // Update token & retry  failed request
         error.config.headers.Authorization = `Bearer ${refreshRes.data.accessToken}`;
         return axios(error.config);
-      } catch (refreshError) {
-        console.error("Session expired, login again.");
+      } catch (error) {
+        console.log("error in refresh token",error)
+        if(error.response.status === 403){
+          toast.error("Login first")
+        }
       }
     }
     return Promise.reject(error);

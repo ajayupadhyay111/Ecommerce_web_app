@@ -1,17 +1,18 @@
-import { API } from "@/api/api";
+import { API } from "@/api/axios";
+import { sendMailOnUserEmail } from "@/api/UserRelatedAPI";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [success, setSuccess] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    let regex = /^[a-zA-Z0-9_.+\-]+[\x40][a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+    let regex = /^[a-zA-Z0-9_.+/-]+[\x40][a-zA-Z0-9./-]+\.[a-zA-Z]{2,}$/;
     const isValid = regex.test(email);
     if (!isValid) {
       toast.error("Email is not valid");
@@ -19,20 +20,17 @@ const ForgotPassword = () => {
     }
     try {
       setIsLoading(true);
-      const response = await API.post("/sendEmailToResetPassword", { email });
+      const response = await sendMailOnUserEmail(email)
       setSuccess(response.data.success);
+      navigate("/login")
+      toast.success("Password reset link sent to you register email")
     } catch (error) {
       toast.error(error.response?.data.message || error.message);
     } finally {
       setIsLoading(false);
       setEmail("");
     }
-    // Simulate API request
-    setTimeout(() => {
-      setMessage(
-        "If an account with this email exists, you will receive a password reset link."
-      );
-    }, 1000);
+ 
   };
 
   return (
@@ -45,8 +43,8 @@ const ForgotPassword = () => {
           Enter your email address below and we'll send you a link to reset your
           password.
         </p>
-        {message && (
-          <p className="text-green-600 text-sm text-center mb-4">{message}</p>
+        {success && (
+          <p className="text-green-600 text-sm text-center mb-4">If an account with this email exists, you will receive a password reset link.</p>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

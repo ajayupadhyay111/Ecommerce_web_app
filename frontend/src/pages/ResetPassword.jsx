@@ -1,4 +1,4 @@
-import { API } from "@/api/api";
+import { API } from "@/api/axios";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -6,7 +6,6 @@ import { useNavigate, useParams } from "react-router-dom";
 
 const ResetPassword = () => {
   const { token } = useParams();
-  const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const {
     register,
@@ -37,9 +36,6 @@ const ResetPassword = () => {
         <p className="text-gray-600 text-sm text-center mb-6">
           Enter your new password below.
         </p>
-        {message && (
-          <p className="text-green-600 text-sm text-center mb-4">{message}</p>
-        )}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium">New Password</label>
@@ -82,9 +78,9 @@ const ResetPassword = () => {
           )}
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-[#21CBCA] text-white hover:bg-[#1db1b1] rounded-md transition-all duration-200"
+            className="w-full py-2 px-4 bg-[#21CBCA] text-white hover:bg-[#1db1b1] rounded-md transition-all duration-200 flex items-center justify-center"
           >
-            Reset Password
+            {isLoading ? <div className="w-5 h-5 rounded-full animate-spin border-2 border-gray-800"></div>:"Reset Password"}
           </button>
         </form>
       </div>

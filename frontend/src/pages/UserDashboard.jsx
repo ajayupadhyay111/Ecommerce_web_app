@@ -1,26 +1,51 @@
 import { useState, useEffect } from "react";
-import { Package, User, MapPin, Heart, LogOut, ChevronDown } from "lucide-react";
+import {
+  Package,
+  User,
+  MapPin,
+  Heart,
+  LogOut,
+  ChevronDown,
+} from "lucide-react";
 import { useDispatch } from "react-redux";
 import { logout } from "@/store/features/auth/authSlice";
 import Products from "@/components/UserDashboardComponent/Products";
 import Profile from "@/components/UserDashboardComponent/Profile";
 import Address from "@/components/UserDashboardComponent/Address";
 import WishList from "@/components/UserDashboardComponent/WishList";
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import toast from "react-hot-toast";
+import { logoutUser } from "@/api/UserRelatedAPI";
+import { useNavigate } from "react-router-dom";
+import { scrollToTop } from "@/helper/ScrollToTop";
 
 const UserDashboard = () => {
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState("orders");
   const [collapsed, setCollapsed] = useState(false);
+  const navigate = useNavigate();
 
+  useEffect(()=>{
+    scrollToTop();
+  },[])
   const navItems = [
     { id: "orders", label: "Orders", icon: Package },
     { id: "profile", label: "Profile", icon: User },
     { id: "addresses", label: "Addresses", icon: MapPin },
-    { id: "wishlist", label: "Wishlist", icon: Heart }
+    { id: "wishlist", label: "Wishlist", icon: Heart },
   ];
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    try {
+      let response = await logoutUser();
+      dispatch(logout());
+      console.log(response);
+      toast.success(response.data.message);
+      navigate("/login");
+    } catch (error) {
+      console.log("error in navbar logout function", error);
+      toast.error(error?.response?.data.message || error.message);
+    }
   };
 
   const renderContent = () => {
@@ -96,15 +121,29 @@ const UserDashboard = () => {
             </button>
           ))}
 
-          <button
-            onClick={handleLogout}
-            className={`w-full flex items-center gap-3 rounded-lg text-red-500 hover:bg-red-50 ${
-              collapsed ? "p-2 md:p-3" : "p-3"
-            }`}
-          >
-            <LogOut className="h-5 w-5 md:mx-0 mx-auto" />
-            {!collapsed && <span className="md:block hidden">Logout</span>}
-          </button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <button
+                className={`w-full flex items-center gap-3 rounded-lg text-red-500 hover:bg-red-50 ${
+                  collapsed ? "p-2 md:p-3" : "p-3"
+                }`}
+              >
+                <LogOut className="h-5 w-5 md:mx-0 mx-auto" />
+                {!collapsed && <span className="md:block hidden">Logout</span>}
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogTitle>Are you sure?</DialogTitle>
+              <DialogDescription className="flex justify-end items-center gap-4 mt-2">
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md"
+                >
+                  Logout
+                </button>
+              </DialogDescription>
+            </DialogContent>
+          </Dialog>
         </nav>
 
         <button

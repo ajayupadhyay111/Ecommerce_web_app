@@ -2,14 +2,14 @@ import React, { lazy, Suspense, useEffect, useState } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { PublicRoutes } from "./components/ProtectedRoutes";
 import { useDispatch } from "react-redux";
-import { logout } from "./store/features/auth/authSlice";
+import { logout, setCredentials } from "./store/features/auth/authSlice";
 import "./App.css";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import UserDashboard from "./pages/UserDashboard";
 import AdminPanel from "./pages/AdminPanel";
 import About from "./pages/About";
+import { getProfile } from "./api/UserRelatedAPI";
 
 const Home = lazy(() => import("./pages/Home"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -24,7 +24,6 @@ const PageNotFound = lazy(()=>import("./pages/PageNotFound"))
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
   const dispatch = useDispatch();
   useEffect(() => {
     fetchUserData();
@@ -32,12 +31,11 @@ const App = () => {
   async function fetchUserData() {
     try {
       setIsLoading(true);
+      const response = await getProfile();
+      dispatch(setCredentials(response.data.user))
     } catch (error) {
       dispatch(logout(null));
       console.log(error);
-      if (error?.response?.status === 403 || error.response?.status === 400) {
-        navigate("/login");
-      }
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +50,7 @@ const App = () => {
   }
   const GoogleAuthWrapper = ({ children }) => {
     return (
-      <GoogleOAuthProvider clientId="640229268259-hg3fv9cf7idg7itvtsgnh97c29ftumtq.apps.googleusercontent.com">
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
         {children}
       </GoogleOAuthProvider>
     );
@@ -73,9 +71,7 @@ const App = () => {
             <Route path="/login"
               element={
                 <GoogleAuthWrapper>
-                  <PublicRoutes>
                     <Login />
-                  </PublicRoutes>
                 </GoogleAuthWrapper>
               }
             />
@@ -83,9 +79,7 @@ const App = () => {
               path="/register"
               element={
                 <GoogleAuthWrapper>
-                  <PublicRoutes>
                     <Register />
-                  </PublicRoutes>
                 </GoogleAuthWrapper>
               }
             />

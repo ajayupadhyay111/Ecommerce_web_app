@@ -1,11 +1,29 @@
-import { Search, Heart, ShoppingCart, Menu, X } from "lucide-react";
+import { Search, ShoppingCart, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { DrawerComponent } from "./DrawerComponent";
 import { Drawer, DrawerTrigger } from "./ui/drawer";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import { logoutUser } from "@/api/UserRelatedAPI";
+import { logout } from "@/store/features/auth/authSlice";
+import toast from "react-hot-toast";
 const navItems = ["New in", "Men", "Women", "Baby", "Kids", "About"];
 
 function Navbar() {
@@ -13,17 +31,18 @@ function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [openDrawer, setOpenDrawer] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const search = queryParams.get("search");
   const { totalPorductQuantity } = useSelector((state) => state.cart);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   useEffect(() => {
     setSearchValue(search || "");
   }, [search]);
 
-  const authenticated = true;
-  const navigate = useNavigate();
-
+  const { authenticated, userInfo } = useSelector((state) => state.auth);
   const handleSearch = () => {
     if (searchValue.length > 0) {
       navigate(`/filter?search=${searchValue}`);
@@ -34,6 +53,21 @@ function Navbar() {
 
   const handleMenuClick = (category) => {
     navigate(`/filter?search=${category}`, { state: { category } });
+  };
+
+  const handleLogout = async () => {
+    try {
+      let response = await logoutUser();
+      dispatch(logout());
+      console.log(response);
+      toast.success(response.data.message);
+      navigate("/login");
+    } catch (error) {
+      console.log("error in navbar logout function", error);
+      toast.error(error?.response?.data.message || error.message);
+    } finally {
+      setOpenDialog(false);
+    }
   };
 
   return (
@@ -98,26 +132,76 @@ function Navbar() {
 
             {/* Auth/Cart Icons */}
             {authenticated ? (
-              <div className="flex items-center space-x-4">
-
+              <div className=" hidden lg:flex items-center space-x-4">
                 {/* // cart button */}
                 <Drawer direction="right">
                   <DrawerTrigger asChild>
-                  <button className="relative transition-all duration-300 hover:scale-110">
-                    <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-                    <span className="absolute -top-2 -right-1 h-4 w-4 rounded-full bg-blue-500 flex items-center justify-center p-1 text-[11px] text-white ">
-                      {totalPorductQuantity}
-                    </span>
-                    <DrawerComponent
-                      isOpen={openDrawer}
-                      setIsOpen={setOpenDrawer}
+                    <button className="relative transition-all duration-300 hover:scale-110">
+                      <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                      <span className="absolute -top-2 -right-1 h-4 w-4 rounded-full bg-blue-500 flex items-center justify-center p-1 text-[11px] text-white ">
+                        {totalPorductQuantity}
+                      </span>
+                      <DrawerComponent
+                        isOpen={openDrawer}
+                        setIsOpen={setOpenDrawer}
                       />
-                  </button>
-                      </DrawerTrigger>
+                    </button>
+                  </DrawerTrigger>
                 </Drawer>
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                    <img
+                      src={
+                        userInfo.picture
+                          ? userInfo.picture
+                          : "https://github.com/shadcn.png"
+                      }
+                      alt=""
+                      className="w-10 h-10 rounded-full"
+                    />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>Profile</DropdownMenuItem>
+                    <DropdownMenuItem onClick={()=>navigate("/dashboard")}>Dashboard</DropdownMenuItem>
+                    <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+                      <DialogTrigger asChild>
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            setOpenDialog(true);
+                          }}
+                        >
+                          Logout
+                        </DropdownMenuItem>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogTitle>Are you sure?</DialogTitle>
+                        <DialogDescription className="flex justify-end items-center gap-4 mt-2">
+                          <button
+                            onClick={() => setOpenDialog(false)}
+                            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-md"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleLogout}
+                            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md"
+                          >
+                            Logout
+                          </button>
+                        </DialogDescription>
+                      </DialogContent>
+                    </Dialog>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
-              <Button className="bg-blue-600 hover:bg-blue-700 transition-all duration-100 hidden sm:inline-flex">
+              <Button
+                onClick={() => navigate("/login")}
+                className="bg-blue-600 hover:bg-blue-700 transition-all duration-100 hidden sm:inline-flex"
+              >
                 Login
               </Button>
             )}
