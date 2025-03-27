@@ -6,6 +6,7 @@ import { verificationTemplate } from "../utils/verficationTemplate.js";
 import { generateToken } from "../utils/generateToken.js";
 import jwt from "jsonwebtoken";
 import { resetPasswordTemplate } from "../utils/resetPasswordTemplate.js";
+
 export const registerController = async (request, response, next) => {
   try {
     const { username, email, password } = request.body;
@@ -57,7 +58,6 @@ export const verifyEmail = async (request, response, next) => {
   try {
     const { token } = request.params;
     const { OTP: otp } = request.body;
-
     if (!token) {
       return response.status(400).json({ message: "Timeout, Try again" });
     }
@@ -94,7 +94,7 @@ export const loginController = async (request, response, next) => {
     if (!email || !password) {
       return response.status(400).json({ message: "All fields required" });
     }
-
+    console.log(email)
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -284,6 +284,7 @@ export const profileController = async (request, response, next) => {
         name: user.name,
         email: user.email,
         isVerified: user.isVerified,
+        picture:user.picture ? user.picture:null,
         role: user.role,
       },
       accessToken 

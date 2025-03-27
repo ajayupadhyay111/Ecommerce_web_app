@@ -16,6 +16,10 @@ const orderSchema = new mongoose.Schema({
       quantity: {
         type: Number,
         required: true,
+      },
+      size:{
+        type:String,
+        required:true
       }
     }
   ],
@@ -32,6 +36,9 @@ const orderSchema = new mongoose.Schema({
     type: String,
     enum: ["processing", "shipped", "delivered", "cancelled"],
     default: "processing",
+  }, 
+  orderAddress:{
+    type:String,
   },
   createdAt: {
     type: Date,

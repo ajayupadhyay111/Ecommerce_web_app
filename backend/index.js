@@ -6,6 +6,8 @@ import { config } from "dotenv";
 import connectDB from "./config/db.js";
 import errorHandler from "./utils/handleError.js";
 import adminRoutes from "./routes/admin.routes.js";
+import productRoutes from './routes/product.routes.js';
+
 import path from "path";
 
 config();
@@ -26,6 +28,7 @@ app.use(express.json());
 //routes
 app.use("/api", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/product", productRoutes);
 app.use(errorHandler);
 
 app.use(express.static(path.join(_dirname, "/frontend/dist")));

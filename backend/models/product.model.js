@@ -5,6 +5,10 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  brand:{
+    type:String,
+    required:true
+  },
   description: {
     type: String,
     required: true,
@@ -12,6 +16,14 @@ const productSchema = new mongoose.Schema({
   price: {
     type: Number,
     required: true,
+  },
+  mrp:{
+    type:Number,
+    required:true
+  },
+  discount:{
+    type:Number,
+    required:true
   },
   category: {
     type: String,
@@ -22,12 +34,21 @@ const productSchema = new mongoose.Schema({
     required: true,
     default: 1
   },
-  images: [
-    {
-      url: String,
-      public_id: String
-    }
-  ],
+  images: {
+    type:Array,
+    required:true
+  },
+  sizes:{
+    type:Array,
+    required:true
+  },
+  highlights:{
+    type:Array,
+  },
+  status:{
+    type:Boolean,
+    default:"false"
+  },
   ratings: {
     type: Number,
     default: 0
