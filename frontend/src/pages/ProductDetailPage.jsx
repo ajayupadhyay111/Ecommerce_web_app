@@ -1,47 +1,35 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import Cart from '@/lib/cart';
 import Heart from '@/lib/heart';
 import { useDispatch } from 'react-redux';
 import { addProductToCart } from '@/store/features/cart/cartSlice';
+import { getProductById } from '@/api/UserRelatedAPI';
 
 const ProductDetailPage = () => {
   const { id } = useParams();
   const [selectedSize, setSelectedSize] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [product, setProduct] = useState([])
   const dispatch = useDispatch();
   // Dummy product data - replace with your API call
-  const product = {
-    name: "Men's Regular Fit Casual Shirt",
-    brand: "Baleshwar",
-    price: 999,
-    mrp: 1999,
-    discount: 50,
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    images: [
-      "https://duders.in/cdn/shop/files/MenShirts_3_600x.png?v=1702724615",
-      "https://duders.in/cdn/shop/files/MenShirts_2_600x.png?v=1702724615",
-      "https://duders.in/cdn/shop/files/MenShirts_1_600x.png?v=1702724615",
-    ],
-    highlights: [
-      "Regular Fit",
-      "Pure Cotton",
-      "Full Sleeves",
-      "Machine Wash",
-      "Casual Wear"
-    ],
-    description: "A comfortable and stylish casual shirt perfect for everyday wear."
-  };
 
-  const handleAddToCart = (id) => {
+  const handleAddToCart = async(id) => {
     if (!selectedSize) {
       alert('Please select a size');
       return;
     }
+    
     dispatch(addProductToCart({id,size:selectedSize}))
     console.log('Added to cart:', { ...product, selectedSize });
   };
+
+  useEffect(()=>{
+    (async()=>{
+      const response = await getProductById(id)
+      setProduct(response.data.product)
+    })()
+  },[])
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:mt-0 mt-28">
@@ -50,21 +38,21 @@ const ProductDetailPage = () => {
         <div className="md:sticky top-0">
           <div className="flex gap-4">
             <div className="w-20 flex flex-col gap-2">
-              {product.images.map((img, idx) => (
+              {product?.images?.map((img, idx) => (
                 <button
                   key={idx}
                   className={`border-2 ${selectedImage === idx ? 'border-blue-500' : 'border-gray-200'}`}
                   onClick={() => setSelectedImage(idx)}
                 >
-                  <img src={img} alt={`${product.name} ${idx + 1}`} className="w-full" />
+                  <img src={img.url} alt={`${product.name} ${idx + 1}`} className="w-full" />
                 </button>
               ))}
             </div>
             <div className="flex-1">
               <img
-                src={product.images[selectedImage]}
+                src={product?.images?.[selectedImage].url}
                 alt={product.name}
-                className="w-full aspect-square object-cover object-top"
+                className="w-full h-[600px] object-cover object-top"
               />
             </div>
           </div>
@@ -104,7 +92,7 @@ const ProductDetailPage = () => {
           <div className="mt-8">
             <h3 className="text-lg font-medium mb-4">Select Size</h3>
             <div className="flex gap-4">
-              {product.sizes.map(size => (
+              {product.sizes?.map(size => (
                 <button
                   key={size}
                   className={`w-12 h-12 rounded-full border-2 ${
@@ -125,7 +113,7 @@ const ProductDetailPage = () => {
             <div className="space-y-4">
               <h4 className="font-medium">Highlights</h4>
               <ul className="list-disc pl-5 space-y-2">
-                {product.highlights.map((highlight, idx) => (
+                {product.highlights?.map((highlight, idx) => (
                   <li key={idx}>{highlight}</li>
                 ))}
               </ul>

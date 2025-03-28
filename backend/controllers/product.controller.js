@@ -36,14 +36,15 @@ export const productController = {
         category,
         stock,
         images: uploadedImages, // Multiple images stored here
-        sizes: sizes.split(","), // Convert string to array
-        highlights: highlights ? highlights.split(",") : [], // Handle optional highlights
-        status: status === "true", // Convert string to boolean
+        sizes: JSON.parse(sizes),
+        highlights: JSON.parse(highlights),
+        status: true,
       });
 
       await newProduct.save();
 
       response.status(201).json({
+        success: true,
         message: "Product created successfully",
         product: newProduct,
       });
@@ -65,45 +66,52 @@ export const productController = {
         sizes,
         highlights,
         status,
-    } = request.body;
-      const {id} = request.params;
+      } = request.body;
+      const { id } = request.params;
 
       // Create new product
-      const newProduct = await productModel.findByIdAndUpdate(id,{
-        name,
-        brand,
-        description,
-        price,
-        mrp,
-        discount,
-        category,
-        stock,
-        sizes: sizes?.split(","), // Convert string to array
-        highlights: highlights ? highlights.split(",") : [], // Handle optional highlights
-        status: status === "true", // Convert string to boolean
-      },{new:true});
+      const newProduct = await productModel.findByIdAndUpdate(
+        id,
+        {
+          name,
+          brand,
+          description,
+          price,
+          mrp,
+          discount,
+          category,
+          stock,
+          sizes,
+          highlights,
+          status: true, // Convert string to boolean
+        },
+        { new: true }
+      );
 
       await newProduct.save();
 
       response.status(201).json({
+        success: true,
         message: "Product updated successfully",
         product: newProduct,
       });
     } catch (error) {
-      console.log(error)
+      console.log(error);
       next(error);
     }
   },
-  deleteProduct: async (request,response,next) => {
+  deleteProduct: async (request, response, next) => {
     try {
-      const {id} = request.params;
-      const product = await productModel.findByIdAndDelete(id)
-      if(!product){
-        return response.status(400).json({message:"Product not found"})
+      const { id } = request.params;
+      const product = await productModel.findByIdAndDelete(id);
+      if (!product) {
+        return response.status(400).json({ message: "Product not found" });
       }
-      response.status(200).json({message:"Product deleted successfully"})
+      response
+        .status(200)
+        .json({ success: true, message: "Product deleted successfully" });
     } catch (error) {
-      next(error)
+      next(error);
     }
   },
   getProductById: async (request,response,next) => {
@@ -118,11 +126,23 @@ export const productController = {
       next(error)
     }
   },
-  filteredProduct: async (request,response,next) => {
+  filteredProduct: async (request, response, next) => {
     try {
-      const {} = request.query; 
+      const {} = request.query;
     } catch (error) {
-      next(error)
+      next(error);
+    }
+  },
+  getProducts: async (request, response, next) => {
+    try {
+      const { limit, page } = request.query;
+      const products = await productModel
+        .find()
+        .sort({ createdAt: -1 })
+        .limit(parseInt(limit));
+      response.status(200).json({ products });
+    } catch (error) {
+      next(error);
     }
   },
 };

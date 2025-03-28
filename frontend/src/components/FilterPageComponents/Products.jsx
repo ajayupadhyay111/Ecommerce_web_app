@@ -1,40 +1,13 @@
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Cart from "@/lib/cart";
 import Heart from "@/lib/heart";
 import { useNavigate } from "react-router-dom";
+import { getProducts } from "@/api/adminProductRelatedAPI";
 
-let pro = [
-  {
-    _id: 1,
-    img: "https://duders.in/cdn/shop/files/MenShirts_3_600x.png?v=1702724615",
-    name: "Baleshwar",
-    price: "999",
-  },{
-    _id: 2,
-    img: "https://duders.in/cdn/shop/files/MenShirts_3_600x.png?v=1702724615",
-    name: "Baleshwar",
-    price: "999",
-  },{
-    _id: 3,
-    img: "https://duders.in/cdn/shop/files/MenShirts_3_600x.png?v=1702724615",
-    name: "Baleshwar",
-    price: "999",
-  },{
-    _id: 4,
-    img: "https://duders.in/cdn/shop/files/MenShirts_3_600x.png?v=1702724615",
-    name: "Baleshwar",
-    price: "999",
-  },{
-    _id: 5,
-    img: "https://duders.in/cdn/shop/files/MenShirts_3_600x.png?v=1702724615",
-    name: "Baleshwar",
-    price: "999",
-  },
-];
-
-const Products = () => {
+const Products = React.memo(() => {
   const [hoveredId, setHoveredId] = useState(null);
   const [favorites, setFavorites] = useState(new Set());
+  const [products, setProducts] = useState([])
   const navigate = useNavigate();
 
   const handleAddToCart = (productId) => {
@@ -52,11 +25,20 @@ const Products = () => {
       return newFavorites;
     });
   };
+
+  useEffect(()=>{
+    (async()=>{
+      const response = await getProducts()
+      setProducts(response.products)
+    })()
+  },[])
+
+  console.log(products)
   
   return (
     <div className="w-full p-4 h-full">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto">
-        {pro.map((product) => (
+        {products.map((product) => (
           <div
           onClick={()=>navigate("/product/"+product._id)}
             key={product._id}
@@ -66,7 +48,7 @@ const Products = () => {
           >
             <div
               style={{
-                backgroundImage: `url(${product.img})`,
+                backgroundImage: `url(${product?.images[1].url})`,
                 backgroundSize: "cover",
                 backgroundPosition: "top",
                 height: "320px",
@@ -111,6 +93,6 @@ const Products = () => {
       </div>
     </div>
   );
-};
+})
 
 export default Products;

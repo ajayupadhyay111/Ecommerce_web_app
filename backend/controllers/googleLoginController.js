@@ -29,7 +29,7 @@ export const googleLogin = async (req, res, next) => {
     const accessToken = jwt.sign(
       { email: user.email },
       process.env.ACCESS_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "1h" }
     );
     const refreshToken = jwt.sign(
       { email: user.email },

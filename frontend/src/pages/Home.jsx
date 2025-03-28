@@ -1,25 +1,33 @@
-import Footer from "@/components/Footer";
+import HeroSection from "@/components/HomePageComponents/HeroSection";
+import JustForYou from "@/components/HomePageComponents/JustForYou";
 import ProcessToGetProduct from "@/components/HomePageComponents/ProcessToGetProduct";
-import Navbar from "@/components/Navbar";
-import { lazy } from "react";
+import SomeProducts from "@/components/HomePageComponents/SomeProducts";
+import SubscribeToGetDiscount from "@/components/HomePageComponents/SubscribeToGetDiscount";
+import Testimonial from "@/components/HomePageComponents/Testimonial";
 
-const HeroSection = lazy(() =>
-  import("@/components/HomePageComponents/HeroSection")
-);
-const SomeProducts = lazy(() =>
-  import("@/components/HomePageComponents/SomeProducts")
-);
-const SubscribeToGetDiscount = lazy(() =>
-  import("@/components/HomePageComponents/SubscribeToGetDiscount")
-);
-const Testimonial = lazy(() =>
-  import("@/components/HomePageComponents/Testimonial")
-);
-const JustForYou = lazy(() =>
-  import("@/components/HomePageComponents/JustForYou")
-);
+import React, { lazy } from "react";
+import { useSelector } from "react-redux";
+// const HeroSection =
 
-const Home = () => {
+// const HeroSection = lazy(() =>
+//   import("@/components/HomePageComponents/HeroSection")
+// );
+// const SomeProducts = lazy(() =>
+//   import("@/components/HomePageComponents/SomeProducts")
+// );
+// const SubscribeToGetDiscount = lazy(() =>
+//   import("@/components/HomePageComponents/SubscribeToGetDiscount")
+// );
+// const Testimonial = lazy(() =>
+//   import("@/components/HomePageComponents/Testimonial")
+// );
+// const JustForYou = lazy(() =>
+//   import("@/components/HomePageComponents/JustForYou")
+// );
+
+const Home = React.memo(() => {
+  const {userInfo} = useSelector(state=>state.auth)
+  console.log(userInfo)
   return (
     <>
       <div className="relative lg:w-[1000px] mx-auto bg-gray-50">
@@ -39,6 +47,6 @@ const Home = () => {
       </div>
     </>
   );
-};
+})
 
 export default Home;

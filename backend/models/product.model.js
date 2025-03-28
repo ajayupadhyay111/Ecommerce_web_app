@@ -47,7 +47,7 @@ const productSchema = new mongoose.Schema({
   },
   status:{
     type:Boolean,
-    default:"false"
+    default:true
   },
   ratings: {
     type: Number,
@@ -61,6 +61,12 @@ const productSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   }
+});
+
+// Auto-update status based on stock
+productSchema.pre("save", function (next) {
+  this.status = this.stock > 0 ? "In Stock" : "Out of Stock";
+  next();
 });
 
 export default mongoose.model("Product", productSchema);

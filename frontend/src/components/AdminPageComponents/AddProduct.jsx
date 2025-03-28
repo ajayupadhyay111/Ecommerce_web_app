@@ -1,26 +1,29 @@
 import { useRef, useState } from "react";
 import { X, Upload, Plus, Minus } from "lucide-react";
+import { newProduct } from "@/api/adminProductRelatedAPI";
+import toast from "react-hot-toast";
 
-const AddProduct = ({ isOpen, onClose }) => {
-    const fileInputRef = useRef(null);
-
+const AddProduct = ({ setProducts, isOpen, onClose }) => {
+  const fileInputRef = useRef(null);
+  const [images, setImages] = useState([]);
+  const [IsLoading, setIsLoading] = useState(false)
   const [productData, setProductData] = useState({
     name: "",
     brand: "",
-    images: ["", "", "", ""],
-    category:"",
+    images: [],
+    category: "",
     price: "",
     mrp: "",
     discount: "",
     sizes: [],
     stock: "",
-    status: "Active",
-    highlights: [""],
-    description: ""
+    status: "",
+    highlights: [],
+    description: "",
   });
 
   const availableSizes = ["XS", "S", "M", "L", "XL", "XXL"];
-  const categories = ["Men", "Women", "Kids", "Accessories"];
+  const categories = ["Men", "Women", "Kids", "Baby"];
 
   // Modified image handler for bulk upload
   const handleImageUpload = (e) => {
@@ -31,17 +34,19 @@ const AddProduct = ({ isOpen, onClose }) => {
     }
 
     // Create preview URLs for images
-    const imageUrls = files.map(file => ({
+    const imageUrls = files.map((file) => ({
       file,
-      preview: URL.createObjectURL(file)
+      preview: URL.createObjectURL(file),
     }));
+    console.log(files)
+    setImages(files)
 
     setProductData({ ...productData, images: imageUrls });
   };
 
   const handleSizeToggle = (size) => {
     const newSizes = productData.sizes.includes(size)
-      ? productData.sizes.filter(s => s !== size)
+      ? productData.sizes.filter((s) => s !== size)
       : [...productData.sizes, size];
     setProductData({ ...productData, sizes: newSizes });
   };
@@ -49,7 +54,7 @@ const AddProduct = ({ isOpen, onClose }) => {
   const addHighlight = () => {
     setProductData({
       ...productData,
-      highlights: [...productData.highlights, ""]
+      highlights: [...productData.highlights, ""],
     });
   };
 
@@ -58,18 +63,60 @@ const AddProduct = ({ isOpen, onClose }) => {
     setProductData({ ...productData, highlights: newHighlights });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log(productData);
+    try {
+      setIsLoading(true)
+      const formData = new FormData();
+  
+      // Append basic product details
+      formData.append("name", productData.name);
+      formData.append("brand", productData.brand);
+      formData.append("category", productData.category);
+      formData.append("price", productData.price);
+      formData.append("mrp", productData.mrp);
+      formData.append("discount", productData.discount);
+      formData.append("stock", productData.stock);
+      formData.append("description", productData.description);
+      formData.append("status", "Active");
+  
+      // Append arrays as JSON strings
+      formData.append("sizes", JSON.stringify(productData.sizes));
+      formData.append("highlights", JSON.stringify(productData.highlights));
+  
+      // Append each image file
+      images.forEach((file) => {
+        formData.append("images", file);
+      });
+  
+      // Send the formData to the server
+      const response = await newProduct(formData);
+  
+      if (response.success) {
+        toast.success("Product added successfully!");
+        setProducts(prev => [...prev, response.product]);
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error adding product:", error);
+      toast.error(error?.response?.data?.message || "Failed to add product");
+    }finally{
+      setIsLoading(false)
+    }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div onClick={onClose} className="fixed w-screen inset-0 z-50 bg-neutral-500/50 py-10 overflow-y-auto">
-      <div  className=" relative min-h-screen md:flex md:items-center md:justify-center">
-        <div onClick={(e)=>e.stopPropagation()} className=" relative bg-white w-full md:max-w-3xl mx-auto rounded-lg shadow-lg">
+    <div
+      onClick={onClose}
+      className="fixed w-screen inset-0 z-50 bg-neutral-500/50 py-10 overflow-y-auto"
+    >
+      <div className=" relative min-h-screen md:flex md:items-center md:justify-center">
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className=" relative bg-white w-full md:max-w-3xl mx-auto rounded-lg shadow-lg"
+        >
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
             <h2 className="text-xl font-semibold">Add New Product</h2>
@@ -112,7 +159,9 @@ const AddProduct = ({ isOpen, onClose }) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Discount (%)</label>
+                <label className="block text-sm font-medium mb-1">
+                  Discount (%)
+                </label>
                 <input
                   type="number"
                   value={productData.discount}
@@ -124,7 +173,9 @@ const AddProduct = ({ isOpen, onClose }) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">No of Stock</label>
+                <label className="block text-sm font-medium mb-1">
+                  No of Stock
+                </label>
                 <input
                   type="number"
                   value={productData.stock}
@@ -162,36 +213,40 @@ const AddProduct = ({ isOpen, onClose }) => {
                     <span>Upload Images (Max 4)</span>
                   </button>
                 </div>
-                
+
                 {/* Image Previews */}
               </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                  {productData.images.map((image, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={image.preview}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newImages = productData.images.filter((_, i) => i !== index);
-                          setProductData({ ...productData, images: newImages });
-                        }}
-                        className="absolute top-1 right-1 p-1 bg-white rounded-full shadow-sm hover:bg-gray-100"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                {productData.images.map((image, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={image.preview}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newImages = productData.images.filter(
+                          (_, i) => i !== index
+                        );
+                        setProductData({ ...productData, images: newImages });
+                      }}
+                      className="absolute top-1 right-1 p-1 bg-white rounded-full shadow-sm hover:bg-gray-100"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Category and Price */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-inline">
               <div>
-                <label className="block text-sm font-medium mb-1">Category</label>
+                <label className="block text-sm font-medium mb-1">
+                  Category
+                </label>
                 <select
                   value={productData.category}
                   onChange={(e) =>
@@ -209,7 +264,9 @@ const AddProduct = ({ isOpen, onClose }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Price (₹)</label>
+                <label className="block text-sm font-medium mb-1">
+                  Price (₹)
+                </label>
                 <input
                   type="number"
                   value={productData.price}
@@ -221,7 +278,9 @@ const AddProduct = ({ isOpen, onClose }) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">MRP (₹)</label>
+                <label className="block text-sm font-medium mb-1">
+                  MRP (₹)
+                </label>
                 <input
                   type="number"
                   value={productData.mrp}
@@ -271,7 +330,7 @@ const AddProduct = ({ isOpen, onClose }) => {
                         newHighlights[index] = e.target.value;
                         setProductData({
                           ...productData,
-                          highlights: newHighlights
+                          highlights: newHighlights,
                         });
                       }}
                       className="flex-1 p-2 border rounded-lg focus:outline-none focus:border-black"
@@ -299,11 +358,16 @@ const AddProduct = ({ isOpen, onClose }) => {
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
+              <label className="block text-sm font-medium mb-1">
+                Description
+              </label>
               <textarea
                 value={productData.description}
                 onChange={(e) =>
-                  setProductData({ ...productData, description: e.target.value })
+                  setProductData({
+                    ...productData,
+                    description: e.target.value,
+                  })
                 }
                 rows={4}
                 className="w-full p-2 border rounded-lg focus:outline-none focus:border-black"
@@ -320,10 +384,13 @@ const AddProduct = ({ isOpen, onClose }) => {
                 Cancel
               </button>
               <button
+              disabled={IsLoading}
                 type="submit"
-                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+                className="px-4 py-2 flex justify-center items-center bg-black text-white rounded-lg hover:bg-gray-800"
               >
-                Add Product
+                {
+                  IsLoading ? <div className="size-5 border-t-2 animate-spin rounded-full"></div>:"Add Product"
+                }
               </button>
             </div>
           </form>

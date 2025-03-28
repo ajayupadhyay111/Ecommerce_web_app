@@ -1,59 +1,68 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, Edit2, Trash2, Filter } from "lucide-react";
 import AddProduct from "./AddProduct";
+import { deleteProduct, getProducts } from "@/api/adminProductRelatedAPI";
+import EditProduct from "./EditProduct";
+import toast from "react-hot-toast";
 
 const Products = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const [selectedProductToUpdate, setSelectedProductToUpdate] = useState({});
+  const [isUpdateProductOpen, setIsUpdateProductOpen] = useState(false);
+  const [products, setProducts] = useState([]);
+  useEffect(() => {
+    (async () => {
+      const data = await getProducts();
+      setProducts(data.products);
+    })();
+  }, []);
 
-  // Static product data - replace with API call
-  const products = [
-    {
-      id: 1,
-      name: "Men's Blue Shirt",
-      category: "Men",
-      subCategory: "Tanks",
-      price: 999,
-      stock: 45,
-      status: "Active",
-      image:
-        "https://duders.in/cdn/shop/files/MenShirts_3_600x.png?v=1702724615",
-    },
-    {
-      id: 2,
-      name: "Women's Red Dress",
-      category: "Women",
-      subCategory: "Shirts",
-      price: 1499,
-      stock: 28,
-      status: "Active",
-      image:
-        "https://duders.in/cdn/shop/files/MenShirts_2_600x.png?v=1702724615",
-    },
-    {id: 3,
-        name: "Men's Blue Shirt",
-        category: "Men",
-        subCategory: "Tanks",
-        price: 999,
-        stock: 45,
-        status: "Active",
-        image:
-          "https://duders.in/cdn/shop/files/MenShirts_3_600x.png?v=1702724615",
-      },
-    // Add more products as needed
-  ];
+  const categories = ["all", "Men", "Women", "Kids", "Baby"];
 
-  const categories = ["all", "Men", "Women", "Kids", "Accessories"];
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "all" || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Enhanced filtering logic using useMemo
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+
+    return products.filter((product) => {
+      // Case-insensitive search across multiple fields
+      const searchMatches = searchTerm.trim() === "" || [
+        product.name,
+        product.brand,
+        product.category,
+        product.price.toString()
+      ].some(field => 
+        field?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+      // Category filtering
+      const categoryMatches = 
+        selectedCategory === "all" || 
+        product.category.toLowerCase() === selectedCategory.toLowerCase();
+
+      return searchMatches && categoryMatches;
+    });
+  }, [products, searchTerm, selectedCategory]);
+
+
+  const handleEditProduct = (product) => {
+    setIsUpdateProductOpen(true);
+    setSelectedProductToUpdate(product);
+  };
+
+  const handleDeleteProduct = async (productId) => {
+   try {
+    const response = await deleteProduct(productId);
+    if (response.success) {
+      setProducts((product) => product._id !== productId);
+      toast.success(response.message);
+    }
+   } catch (error) {
+    console.log(error)
+   }
+  };
 
   return (
     <div className="p-3 md:p-6 space-y-4 md:space-y-6">
@@ -68,6 +77,7 @@ const Products = () => {
           Add Product
         </button>
         <AddProduct
+          setProducts={setProducts}
           isOpen={isAddProductOpen}
           onClose={() => setIsAddProductOpen(false)}
         />
@@ -118,13 +128,13 @@ const Products = () => {
             </thead>
             <tbody className="divide-y">
               {filteredProducts.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50">
+                <tr key={product._id} className="hover:bg-gray-50">
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
                       <img
-                        src={product.image}
+                        src={product?.images[0].url}
                         alt={product.name}
-                        className="h-12 w-12 rounded object-cover"
+                        className="h-12 w-12 rounded object-cover object-top"
                       />
                       <span className="font-medium">{product.name}</span>
                     </div>
@@ -135,20 +145,27 @@ const Products = () => {
                   <td className="py-4 px-6">
                     <span
                       className={`px-3 py-1 rounded-full text-sm ${
-                        product.status === "Active"
+                        product.status
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {product.status}
+                      {product.status ? "In stock" : "Out of stock"}
                     </span>
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex justify-center gap-0">
                       <button className="p-2 hover:bg-gray-100 rounded-lg">
-                        <Edit2 className="h-5 w-5 text-blue-600" />
+                        <Edit2
+                          onClick={() => handleEditProduct(product)}
+                          className="h-5 w-5 text-blue-600"
+                        />
                       </button>
-                      <button className="p-2 hover:bg-gray-100 rounded-lg">
+
+                      <button
+                        onClick={() => handleDeleteProduct(product._id)}
+                        className="p-2 hover:bg-gray-100 rounded-lg"
+                      >
                         <Trash2 className="h-5 w-5 text-red-600" />
                       </button>
                     </div>
@@ -158,13 +175,22 @@ const Products = () => {
             </tbody>
           </table>
         </div>
+        <EditProduct
+          product={selectedProductToUpdate}
+          isOpen={isUpdateProductOpen}
+          onClose={() => setIsUpdateProductOpen(false)}
+          setProducts={setProducts}
+        />
         {/* Mobile Card View */}
         <div className="grid grid-cols-1 gap-4 p-4 md:hidden">
           {filteredProducts.map((product) => (
-            <div key={product.id} className="bg-white rounded-lg border p-4 space-y-3">
+            <div
+              key={product._id}
+              className="bg-white rounded-lg border p-4 space-y-3"
+            >
               <div className="flex items-center gap-3">
                 <img
-                  src={product.image}
+                  src={product.images[0]}
                   alt={product.name}
                   className="h-16 w-16 rounded object-cover"
                 />
@@ -173,7 +199,7 @@ const Products = () => {
                   <p className="text-sm text-gray-500">{product.category}</p>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <span className="text-gray-500">Price:</span>
@@ -196,10 +222,16 @@ const Products = () => {
                   {product.status}
                 </span>
                 <div className="flex gap-2">
-                  <button className="p-2 hover:bg-gray-100 rounded-lg">
+                  <button
+                    onClick={() => handleEditProduct(product)}
+                    className="p-2 hover:bg-gray-100 rounded-lg"
+                  >
                     <Edit2 className="h-5 w-5 text-blue-600" />
                   </button>
-                  <button className="p-2 hover:bg-gray-100 rounded-lg">
+                  <button
+                    onClick={() => handleDeleteProduct(product._id)}
+                    className="p-2 hover:bg-gray-100 rounded-lg"
+                  >
                     <Trash2 className="h-5 w-5 text-red-600" />
                   </button>
                 </div>

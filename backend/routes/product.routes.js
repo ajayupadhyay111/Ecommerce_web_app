@@ -6,8 +6,9 @@ import upload from '../config/multer.js';
 const router = express.Router();
 
 router.route("/newProduct").post(upload.array("images",4), authenticateToken,adminMiddleware,productController.createProduct)
-router.route("/updateProduct/:id").put(authenticateToken,productController.updateProduct)
+router.route("/updateProduct/:id").put(upload.array("images",4),authenticateToken,productController.updateProduct)
 router.route("/deleteProduct/:id").delete(authenticateToken,productController.deleteProduct)
+router.route("/getProducts").get(authenticateToken,productController.getProducts)
 router.route("/:id").get(authenticateToken,productController.getProductById)
 router.route("/filterProduct").get(authenticateToken,productController.filteredProduct)
-export default router
+export default router   

@@ -1,5 +1,5 @@
 import { Search, ShoppingCart, Menu, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,7 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +25,7 @@ import { logout } from "@/store/features/auth/authSlice";
 import toast from "react-hot-toast";
 const navItems = ["New in", "Men", "Women", "Baby", "Kids", "About"];
 
-function Navbar() {
+const Navbar=React.memo(()=> {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -35,15 +34,16 @@ function Navbar() {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const search = queryParams.get("search");
-  const { totalPorductQuantity } = useSelector((state) => state.cart);
+  const { totalProductQuantity } = useSelector((state) => state.cart);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { authenticated, userInfo } = useSelector((state) => state.auth);
   useEffect(() => {
     setSearchValue(search || "");
   }, [search]);
+  console.log(userInfo)
 
-  const { authenticated, userInfo } = useSelector((state) => state.auth);
-  const handleSearch = () => {
+  const handleSearch = () => {  
     if (searchValue.length > 0) {
       navigate(`/filter?search=${searchValue}`);
     } else {
@@ -55,7 +55,7 @@ function Navbar() {
     navigate(`/filter?search=${category}`, { state: { category } });
   };
 
-  const handleLogout = async () => {
+  const handleLogout = async () => {  
     try {
       let response = await logoutUser();
       dispatch(logout());
@@ -139,7 +139,7 @@ function Navbar() {
                     <button className="relative transition-all duration-300 hover:scale-110">
                       <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-200" />
                       <span className="absolute -top-2 -right-1 h-4 w-4 rounded-full bg-blue-500 flex items-center justify-center p-1 text-[11px] text-white ">
-                        {totalPorductQuantity}
+                        {totalProductQuantity}
                       </span>
                       <DrawerComponent
                         isOpen={openDrawer}
@@ -151,12 +151,9 @@ function Navbar() {
                 <DropdownMenu>
                   <DropdownMenuTrigger>
                     <img
-                      src={
-                        userInfo.picture
-                          ? userInfo.picture
-                          : "https://github.com/shadcn.png"
-                      }
-                      alt=""
+                    loading="lazy"
+                      src={userInfo?.picture ||  "https://github.com/shadcn.png"}
+                      alt="User"
                       className="w-10 h-10 rounded-full"
                     />
                   </DropdownMenuTrigger>
@@ -164,7 +161,9 @@ function Navbar() {
                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem>Profile</DropdownMenuItem>
-                    <DropdownMenuItem onClick={()=>navigate("/dashboard")}>Dashboard</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                      Dashboard
+                    </DropdownMenuItem>
                     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
                       <DialogTrigger asChild>
                         <DropdownMenuItem
@@ -264,6 +263,6 @@ function Navbar() {
       </div>
     </nav>
   );
-}
+})
 
 export default Navbar;

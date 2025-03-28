@@ -41,7 +41,7 @@ const Login = () => {
       const response = await googleAuth(authResult.code);
       console.log(response)
       dispatch(setCredentials(response.data.user));
-      dispatch(setAccessToken(response.data.accessToken));
+      localStorage.setItem("accessToken",response.data.accessToken)
       toast.success("Successfully logged in with Google!");
       navigate("/");
     } catch (error) {
@@ -79,7 +79,7 @@ const Login = () => {
                   id="email"
                   type="email"
                   autoComplete="email"
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black"
+                  className=" appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black"
                   {...register("email", {
                     required: "Email is required",
                     pattern: {
