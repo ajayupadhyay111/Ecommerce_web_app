@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Button } from "../ui/button";
 import menShirt from "../../assets/shirts/shirt_1.jpg";
 import poloShirt from "../../assets/polo_shirts/polo_shirts.jpg";
 import menBandana from "../../assets/bandana/men/men_2.jpeg";
 import kidShirt from "../../assets/kids/kids_shirt_1.jpg";
 import menTshirt from "../../assets/t-shirts/t_shirt_1.jpg";
-import menTank from "../../assets/tansk/men/men_1.jpg"
+import menTank from "../../assets/tansk/men/men_1.jpg";
 
 const categories = ["All", "Tanks", "Shirt", "T-shirt", "Bandana", "Belt"];
 const products = [
@@ -56,14 +56,17 @@ const products = [
 ];
 
 const JustForYou = () => {
-  const [currentCategoryProduct, setCurrentCategoryProduct] = useState(products.map((product)=>product[0]));
+  const [currentCategoryProduct, setCurrentCategoryProduct] = useState(
+    products.map((product) => product[0])
+  );
+  const [imageLoaded, setImageLoaded] = useState(true);
   const [activeCategory, setActiveCategory] = useState(0);
 
   const handleCategoryChanges = (index) => {
     setActiveCategory(index);
-    if(index === 0){
-      setCurrentCategoryProduct(products.map((product)=>product[0]))
-      return 
+    if (index === 0) {
+      setCurrentCategoryProduct(products.map((product) => product[0]));
+      return;
     }
     setCurrentCategoryProduct(products[index]);
   };
@@ -73,7 +76,7 @@ const JustForYou = () => {
       <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8">
         Just For You
       </h1>
-      
+
       {/* Category Buttons */}
       <div className="flex overflow-x-auto gap-3 pb-4 mb-8 scrollbar-hide">
         {categories.map((category, index) => {
@@ -101,12 +104,18 @@ const JustForYou = () => {
               key={index}
               className="group relative bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
             >
-              <div className="aspect-[3/4] overflow-hidden">
+              <div className="relative w-full h-full">
+                {!imageLoaded && (
+                  <div className="absolute inset-0 bg-gray-200 animate-pulse z-10"></div>
+                )}
                 <img
                   src={product.img}
                   alt={product.alt}
+                  onLoad={() => setImageLoaded(true)}
                   loading="lazy"
-                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+                  className={`w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105 ${
+                    imageLoaded ? "opacity-100" : "opacity-0"
+                  }`}
                 />
               </div>
               <div className="p-4">

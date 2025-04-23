@@ -21,31 +21,31 @@ const Products = () => {
 
   const categories = ["all", "Men", "Women", "Kids", "Baby"];
 
-
   // Enhanced filtering logic using useMemo
   const filteredProducts = useMemo(() => {
     if (!products) return [];
 
     return products.filter((product) => {
       // Case-insensitive search across multiple fields
-      const searchMatches = searchTerm.trim() === "" || [
-        product.name,
-        product.brand,
-        product.category,
-        product.price.toString()
-      ].some(field => 
-        field?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      const searchMatches =
+        searchTerm.trim() === "" ||
+        [
+          product.name,
+          product.brand,
+          product.category,
+          product.price.toString(),
+        ].some((field) =>
+          field?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
 
       // Category filtering
-      const categoryMatches = 
-        selectedCategory === "all" || 
+      const categoryMatches =
+        selectedCategory === "all" ||
         product.category.toLowerCase() === selectedCategory.toLowerCase();
 
       return searchMatches && categoryMatches;
     });
   }, [products, searchTerm, selectedCategory]);
-
 
   const handleEditProduct = (product) => {
     setIsUpdateProductOpen(true);
@@ -53,16 +53,18 @@ const Products = () => {
   };
 
   const handleDeleteProduct = async (productId) => {
-   try {
-    const response = await deleteProduct(productId);
-    if (response.success) {
-      setProducts((product) => product._id !== productId);
-      toast.success(response.message);
+    try {
+      const response = await deleteProduct(productId);
+      if (response.success) {
+        setProducts((product) => product._id !== productId);
+        toast.success(response.message);
+      }
+    } catch (error) {
+      console.log(error);
     }
-   } catch (error) {
-    console.log(error)
-   }
   };
+
+  console.log(filteredProducts)
 
   return (
     <div className="p-3 md:p-6 space-y-4 md:space-y-6">
@@ -127,51 +129,55 @@ const Products = () => {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filteredProducts.map((product) => (
-                <tr key={product._id} className="hover:bg-gray-50">
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={product?.images[0].url}
-                        alt={product.name}
-                        className="h-12 w-12 rounded object-cover object-top"
-                      />
-                      <span className="font-medium">{product.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">{product.category}</td>
-                  <td className="py-4 px-6">₹{product.price}</td>
-                  <td className="py-4 px-6">{product.stock}</td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm ${
-                        product.status
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {product.status ? "In stock" : "Out of stock"}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex justify-center gap-0">
-                      <button className="p-2 hover:bg-gray-100 rounded-lg">
-                        <Edit2
-                          onClick={() => handleEditProduct(product)}
-                          className="h-5 w-5 text-blue-600"
+              {filteredProducts ? (
+                filteredProducts.map((product) => (
+                  <tr key={product._id} className="hover:bg-gray-50">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={product?.images[0].url}
+                          alt={product.name}
+                          className="h-12 w-12 rounded object-cover object-top"
                         />
-                      </button>
-
-                      <button
-                        onClick={() => handleDeleteProduct(product._id)}
-                        className="p-2 hover:bg-gray-100 rounded-lg"
+                        <span className="font-medium">{product.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">{product.category}</td>
+                    <td className="py-4 px-6">₹{product.price}</td>
+                    <td className="py-4 px-6">{product.stock}</td>
+                    <td className="py-4 px-6">
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          product.status
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
                       >
-                        <Trash2 className="h-5 w-5 text-red-600" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        {product.status ? "In stock" : "Out of stock"}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex justify-center gap-0">
+                        <button className="p-2 hover:bg-gray-100 rounded-lg">
+                          <Edit2
+                            onClick={() => handleEditProduct(product)}
+                            className="h-5 w-5 text-blue-600"
+                          />
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteProduct(product._id)}
+                          className="p-2 hover:bg-gray-100 rounded-lg"
+                        >
+                          <Trash2 className="h-5 w-5 text-red-600" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <p>No Products yet</p>
+              )}
             </tbody>
           </table>
         </div>

@@ -94,7 +94,6 @@ export const loginController = async (request, response, next) => {
     if (!email || !password) {
       return response.status(400).json({ message: "All fields required" });
     }
-    console.log(email)
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -114,7 +113,7 @@ export const loginController = async (request, response, next) => {
     const refreshToken = jwt.sign(
       { email: user.email },
       process.env.REFRESH_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "1d" }
     );
 
     user.refreshToken = refreshToken;
@@ -122,9 +121,9 @@ export const loginController = async (request, response, next) => {
 
     response.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "Strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      secure: false,
+      sameSite: "None",
+      maxAge: 1 * 24 * 60 * 60 * 1000,
     });
 
     response.status(201).json({
@@ -315,7 +314,7 @@ export const refreshToken = async (request, response, next) => {
     const accessToken = jwt.sign(
       { email: user.email },
       process.env.ACCESS_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "5m" }
     );
 
     return response.status(201).json({ accessToken });

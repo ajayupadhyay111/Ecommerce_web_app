@@ -114,25 +114,6 @@ export const productController = {
       next(error);
     }
   },
-  getProductById: async (request,response,next) => {
-    try {
-      const {id} = request.params;
-      const product = await productModel.findById(id)
-      if(!product){
-        return response.status(404).json({product})
-      }
-      response.status(200).json({product})
-    } catch (error) {
-      next(error)
-    }
-  },
-  filteredProduct: async (request, response, next) => {
-    try {
-      const {} = request.query;
-    } catch (error) {
-      next(error);
-    }
-  },
   getProducts: async (request, response, next) => {
     try {
       const { limit, page } = request.query;
@@ -140,6 +121,50 @@ export const productController = {
         .find()
         .sort({ createdAt: -1 })
         .limit(parseInt(limit));
+      response.status(200).json({ products });
+    } catch (error) {
+      next(error);
+    }
+  },
+  getProductById: async (request, response, next) => {
+    try {
+      const { id } = request.params;
+      const product = await productModel.findById(id);
+      if (!product) {
+        return response.status(404).json({ product });
+      }
+      response.status(200).json({ product });
+    } catch (error) {
+      next(error);
+    }
+  },
+  filteredProduct: async (request, response, next) => {
+    try {
+      const { category, size, price, sort } = request.query;
+
+      const products = await productModel.find({
+        ...(category && { category }),
+        ...(size && { sizes: size }),
+        ...(price &&
+          (() => {
+            const [prefix, value] = price.split("-");
+            const num = Number(value);
+            if (prefix === "under" && !isNaN(num))
+              return { price: { $lte: num } };
+            if (prefix === "over" && !isNaN(num))
+              return { price: { $gte: num } };
+
+            const [min, max] = [Number(prefix), num];
+            if (!isNaN(min) && !isNaN(max))
+              return { price: { $gte: min, $lte: max } };
+
+            return {};
+          })()),
+      }).sort((()=>{
+        if(sort === "asc") return {price:1}
+        if(sort === "desc") return {price:-1}
+        if(sort === "latest") return {createdAt:-1}
+      })());
       response.status(200).json({ products });
     } catch (error) {
       next(error);

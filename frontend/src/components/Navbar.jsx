@@ -1,7 +1,7 @@
 import { Search, ShoppingCart, Menu, X } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Button } from "./ui/button";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { DrawerComponent } from "./DrawerComponent";
 import { Drawer, DrawerTrigger } from "./ui/drawer";
@@ -25,25 +25,18 @@ import { logout } from "@/store/features/auth/authSlice";
 import toast from "react-hot-toast";
 const navItems = ["New in", "Men", "Women", "Baby", "Kids", "About"];
 
-const Navbar=React.memo(()=> {
+const Navbar = React.memo(() => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [openDrawer, setOpenDrawer] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const search = queryParams.get("search");
-  const { totalProductQuantity } = useSelector((state) => state.cart);
+  const { cartProductQuantity } = useSelector((state) => state.cart);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { authenticated, userInfo } = useSelector((state) => state.auth);
-  useEffect(() => {
-    setSearchValue(search || "");
-  }, [search]);
-  console.log(userInfo)
 
-  const handleSearch = () => {  
+  const handleSearch = () => {
     if (searchValue.length > 0) {
       navigate(`/filter?search=${searchValue}`);
     } else {
@@ -52,10 +45,13 @@ const Navbar=React.memo(()=> {
   };
 
   const handleMenuClick = (category) => {
-    navigate(`/filter?search=${category}`, { state: { category } });
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+    navigate(`/filter?category=${category.toLowerCase()}&size=&price=&sort=`, {
+      state: { navCategory:category },
+    });
   };
 
-  const handleLogout = async () => {  
+  const handleLogout = async () => {
     try {
       let response = await logoutUser();
       dispatch(logout());
@@ -88,7 +84,10 @@ const Navbar=React.memo(()=> {
             {navItems.map((item, index) => (
               <li
                 onClick={
-                  navItems.length - 1 === index
+                  index === 0
+                    ? () =>
+                        navigate(`/filter?category=&size=&price=&sort=latest`)
+                    : navItems.length - 1 === index
                     ? () => navigate("/about")
                     : () => handleMenuClick(item)
                 }
@@ -130,16 +129,28 @@ const Navbar=React.memo(()=> {
               </div>
             </div>
 
+            {/* Mobile Menu Button */}
+            <button
+              className="lg:hidden text-gray-700 dark:text-gray-200"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-8 h-8" />
+              )}
+            </button>
+
             {/* Auth/Cart Icons */}
             {authenticated ? (
-              <div className=" hidden lg:flex items-center space-x-4">
+              <div className="flex items-center space-x-4">
                 {/* // cart button */}
                 <Drawer direction="right">
                   <DrawerTrigger asChild>
                     <button className="relative transition-all duration-300 hover:scale-110">
                       <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-200" />
                       <span className="absolute -top-2 -right-1 h-4 w-4 rounded-full bg-blue-500 flex items-center justify-center p-1 text-[11px] text-white ">
-                        {totalProductQuantity}
+                        {cartProductQuantity}
                       </span>
                       <DrawerComponent
                         isOpen={openDrawer}
@@ -151,10 +162,16 @@ const Navbar=React.memo(()=> {
                 <DropdownMenu>
                   <DropdownMenuTrigger>
                     <img
-                    loading="lazy"
-                      src={userInfo?.picture ||  "https://github.com/shadcn.png"}
+                      loading="lazy"
+                      src={
+                        (userInfo && userInfo?.picture) ||
+                        "https://github.com/shadcn.png"
+                      }
                       alt="User"
                       className="w-10 h-10 rounded-full"
+                      onError={(e) => {
+                        e.target.src = "https://github.com/shadcn.png"; // fallback image jab fail ho
+                      }}
                     />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
@@ -204,18 +221,6 @@ const Navbar=React.memo(()=> {
                 Login
               </Button>
             )}
-
-            {/* Mobile Menu Button */}
-            <button
-              className="lg:hidden text-gray-700 dark:text-gray-200"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
-            </button>
           </div>
         </div>
 
@@ -240,15 +245,18 @@ const Navbar=React.memo(()=> {
           <ul className="px-4 py-2">
             {navItems.map((item, index) => (
               <li
+                onClick={
+                  index === 0
+                    ? () =>
+                        navigate(`/filter?category=&size=&price=&sort=latest`)
+                    : navItems.length - 1 === index
+                    ? () => navigate("/about")
+                    : () => handleMenuClick(item)
+                }
                 key={index}
-                className="py-3 border-b dark:border-gray-800 last:border-0 text-gray-700 dark:text-gray-200"
+                className="py-3 hover:text-blue-500 border-b dark:border-gray-800 last:border-0 text-gray-700 dark:text-gray-200"
               >
-                <a
-                  href="#"
-                  className="block hover:text-blue-500 transition-colors duration-300"
-                >
-                  {item}
-                </a>
+                {item}
               </li>
             ))}
             {!authenticated && (
@@ -263,6 +271,6 @@ const Navbar=React.memo(()=> {
       </div>
     </nav>
   );
-})
+});
 
 export default Navbar;

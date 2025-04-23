@@ -7,7 +7,7 @@ export const googleLogin = async (req, res, next) => {
   try {
     const { code } = req.query;
     const googleRes = await oauth2client.getToken(code);
-
+    console.log(code)
     oauth2client.setCredentials(googleRes.tokens);
 
     const userRes = await axios.get(

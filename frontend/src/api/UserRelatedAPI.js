@@ -7,6 +7,11 @@ export const googleAuth = (code)=>API.get(`/google?code=${code}`)
 export const getProfile = ()=>API.get("/getUserProfile")
 export const logoutUser = ()=>API.post("/logout")   
 export const sendMailOnUserEmail = (email)=>API.post("/sendEmailToResetPassword",{email})
+
+// user product related api
 export const getProductById = (id)=>API.get(`/product/${id}`)
-export const addProductInCart = (productId,quantity,sizes)=>API.post(`/addToCart/${productId}`,{quantity,sizes})
-export const addProductInCart = (productId,quantity,sizes)=>API.post(`/addToCart/${productId}`,{quantity,sizes})
+export const getProductsForFilterPage = (category,size,price,sort)=>API.get(`/product/filterProduct?category=${category}&size=${size}&price=${price}&sort=${sort}`)
+
+// cart related routes
+// export const getCartPorducts = (productsId)=>API.post("/ cart/getCartProducts",productsId)
+export const addProductInCart = (data)=>API.post(`/cart/addToCart`,data)

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { useGoogleLogin } from "@react-oauth/google";
-import { setAccessToken, setCredentials } from "@/store/features/auth/authSlice";
+import { setCredentials } from "@/store/features/auth/authSlice";
 import { googleAuth, login } from "@/api/UserRelatedAPI";
 import toast from "react-hot-toast";
 import { FaEyeSlash, FaEye } from "react-icons/fa";
@@ -26,10 +26,11 @@ const Login = () => {
       setIsLoading(true);
       const response = await login(data);
       dispatch(setCredentials(response.data.user));
-      dispatch(setAccessToken(response.data.accessToken));
+      localStorage.setItem("accessToken",response.data.accessToken)
       toast.success("Successfully logged in!");
       navigate("/");
     } catch (error) {
+      console.log(error)
       toast.error(error?.response?.data.message || "Login failed");
     } finally {
       setIsLoading(false);
@@ -38,8 +39,8 @@ const Login = () => {
 
   const responseGoogle = async (authResult) => {
     try {
+      console.log(authResult.code)
       const response = await googleAuth(authResult.code);
-      console.log(response)
       dispatch(setCredentials(response.data.user));
       localStorage.setItem("accessToken",response.data.accessToken)
       toast.success("Successfully logged in with Google!");

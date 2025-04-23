@@ -1,35 +1,51 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import Heart from '@/lib/heart';
-import { useDispatch } from 'react-redux';
-import { addProductToCart } from '@/store/features/cart/cartSlice';
-import { getProductById } from '@/api/UserRelatedAPI';
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import Heart from "@/lib/heart";
+import { Plus, Minus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+import {
+  addProductInCart,
+  getProductById,
+} from "@/api/UserRelatedAPI";
+import toast from "react-hot-toast";
 
 const ProductDetailPage = () => {
   const { id } = useParams();
-  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedSize, setSelectedSize] = useState("");
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [product, setProduct] = useState([])
-  const dispatch = useDispatch();
-  // Dummy product data - replace with your API call
+  const [quantity, setQuantity] = useState(1);
+  const [product, setProduct] = useState([]);
+ 
 
-  const handleAddToCart = async(id) => {
+  useEffect(() => {
+    (async () => {
+      const response = await getProductById(id);
+      setProduct(response.data.product);
+    })();
+  }, []);
+
+  console.log(product)
+
+  const handleAddToCart = async (id) => {
     if (!selectedSize) {
-      alert('Please select a size');
+      toast.error("Please select a size");
       return;
     }
     
-    dispatch(addProductToCart({id,size:selectedSize}))
-    console.log('Added to cart:', { ...product, selectedSize });
+    // const response = await addProductInCart({id,size:selectedSize,quantity})
+    // dispatch(addProductToCart({ id, size: selectedSize, quantity }));
   };
 
-  useEffect(()=>{
-    (async()=>{
-      const response = await getProductById(id)
-      setProduct(response.data.product)
-    })()
-  },[])
+  const handleQuantityChange = (type) => {
+    if (type === "increase" && quantity<product.stock) {
+      setQuantity((prev) => prev + 1);
+    } else if (type === "decrease" && quantity > 1) {
+      setQuantity((prev) => prev - 1);
+    }
+  };
+
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:mt-0 mt-28">
@@ -41,10 +57,18 @@ const ProductDetailPage = () => {
               {product?.images?.map((img, idx) => (
                 <button
                   key={idx}
-                  className={`border-2 ${selectedImage === idx ? 'border-blue-500' : 'border-gray-200'}`}
+                  className={`border-2 ${
+                    selectedImage === idx
+                      ? "border-blue-500"
+                      : "border-gray-200"
+                  }`}
                   onClick={() => setSelectedImage(idx)}
                 >
-                  <img src={img.url} alt={`${product.name} ${idx + 1}`} className="w-full" />
+                  <img
+                    src={img.url}
+                    alt={`${product.name} ${idx + 1}`}
+                    className="w-full"
+                  />
                 </button>
               ))}
             </div>
@@ -58,7 +82,7 @@ const ProductDetailPage = () => {
           </div>
           <div className="flex gap-4 mt-6">
             <button
-              onClick={()=>handleAddToCart(id)}
+              onClick={() => handleAddToCart(id)}
               className="flex-1 bg-orange-500 text-white py-4 rounded-lg font-semibold hover:bg-orange-600"
             >
               ADD TO CART
@@ -80,7 +104,7 @@ const ProductDetailPage = () => {
         <div>
           <h1 className="text-2xl font-medium">{product.name}</h1>
           <p className="text-gray-500 mt-1">{product.brand}</p>
-          
+
           <div className="mt-6">
             <div className="flex items-baseline gap-4">
               <span className="text-3xl font-semibold">₹{product.price}</span>
@@ -92,19 +116,45 @@ const ProductDetailPage = () => {
           <div className="mt-8">
             <h3 className="text-lg font-medium mb-4">Select Size</h3>
             <div className="flex gap-4">
-              {product.sizes?.map(size => (
+              {product.sizes?.map((size) => (
                 <button
                   key={size}
                   className={`w-12 h-12 rounded-full border-2 ${
-                    selectedSize === size 
-                      ? 'border-blue-500 text-blue-500' 
-                      : 'border-gray-300 hover:border-gray-400'
+                    selectedSize === size
+                      ? "border-blue-500 text-blue-500"
+                      : "border-gray-300 hover:border-gray-400"
                   }`}
                   onClick={() => setSelectedSize(size)}
                 >
                   {size}
                 </button>
               ))}
+            </div>
+            {/* Add Quantity Controller */}
+            <div className="mt-6">
+              <h3 className="text-lg font-medium mb-4">Quantity</h3>
+              <div className="flex items-center space-x-4">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-10 w-10"
+                  onClick={() => handleQuantityChange("decrease")}
+                  disabled={quantity <= 1}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="w-12 text-center text-lg font-medium">
+                  {quantity}
+                </span>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-10 w-10"
+                  onClick={() => handleQuantityChange("increase")}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
 

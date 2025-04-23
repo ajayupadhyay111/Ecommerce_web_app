@@ -1,70 +1,169 @@
-import LeftSide from "@/components/FilterPageComponents/LeftSide";
+import { getProductsForFilterPage } from "@/api/UserRelatedAPI";
 import Products from "@/components/FilterPageComponents/Products";
-import Sort from "@/components/Sort";
-import { scrollToTop } from "@/helper/ScrollToTop";
-import { useEffect, useState, useCallback } from "react";
-import { useLocation } from "react-router-dom";
-// ...existing imports...
+import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 
 const ProductFilterPage = () => {
-  const [filters, setFilters] = useState({
-    category: ["men", "women"],
-    search: "shoes",
-    sort: "price_asc",
-    page: 1,
-    limit: 20,
-  });
-  const [sort, setSort] = useState("");
-  const [checkedBox, setCheckedBox] = useState([]);
-  const [queryParams, setQueryParams] = useState("");
-  const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  const searchValue = params.get("search");
+  const queryString = window.location.search;
+  const params = useMemo(() => new URLSearchParams(queryString), [queryString]);
 
-  // Memoize the setCheckedBox handler
-  const handleSetCheckedBox = useCallback((categories) => {
-    setCheckedBox(categories);
-  }, []); // Empty dependency array as it doesn't depend on any props or state
+  const [category, setCategory] = useState(params.get("category") || "");
+  const [size, setSize] = useState(params.get("size") || "");
+  const [price, setPrice] = useState(params.get("price") || "");
+  const [sort, setSort] = useState(params.get("sort") || "");
+  const [products, setProducts] = useState([]);
+  const navigate = useNavigate();
 
-  // Memoize the sort handler
-  const handleSortChange = useCallback((sortValue) => {
-    setSort(sortValue);
-  }, []);
+  const handleCategoryCheck = (catego) => {
+    if (catego === category) {
+      setCategory("");
+    } else {
+      setCategory(catego);
+      navigate(`/filter?category=${catego}&size=${size}&price=${price}`);
+    }
+  };
+  const handleSizeCheck = (s) => {
+    if (s === size) {
+      setSize("");
+    } else {
+      setSize(s);
+    }
+    navigate(`/filter?category=${category}&size=${s}&price=${price}`);
+  };
+  const handlePriceCheck = (p) => {
+    if (p === price) {
+      setPrice("");
+    } else {
+      setPrice(p);
+    }
+    navigate(`/filter?category=${category}&size=${size}&price=${p}`);
+  };
 
+  const handleSort = (value) => {
+    setSort(value);
+    navigate(
+      `/filter?category=${category}&size=${size}&price=${price}&sort=${value}`
+    );
+  };
+
+  const fetchData = async (category, size, price, sort) => {
+    try {
+      const response = await getProductsForFilterPage(
+        category,
+        size,
+        price,
+        sort
+      );
+      setProducts(response.data.products);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
-    scrollToTop();
-
-    setFilters((prev) => {
-      const updatedFilters = {
-        ...prev,
-        category: checkedBox,
-        sort: sort,
-        search: searchValue,
-      };
-
-      const queryString = new URLSearchParams({
-        ...updatedFilters,
-        category: checkedBox.join(","),
-      }).toString();
-
-      setQueryParams(queryString);
-      return updatedFilters;
-    });
-  }, [sort, checkedBox, searchValue]);
- 
-  useEffect(() => {
-    console.log(queryParams);
-  }, [queryParams]);
+    console.log(category,size,price,sort)
+    fetchData(category, size, price, sort);
+  }, [category, size, price, sort, params]);
   return (
-    <div className="w-full flex">
-      <div className="w-full h-screen relative flex justify-end">
-        <LeftSide
-          setCheckedBox={handleSetCheckedBox}
-          searchValue={searchValue}
-        />
-        <div className="w-[calc(100%-260px)] h-full overflow-y-auto">
-          <Sort onSortChange={handleSortChange} />
-          <Products filters={filters} />
+    <div className="w-full">
+      <div className="w-full relative flex justify-end">
+        {/* Left Sidebar with Filters */}
+        <div className="w-[260px] h-fit bg-gray-100 p-4 overflow-y-auto">
+          <h2 className="text-xl font-semibold mb-4">Filters</h2>
+          {/* Categories */}
+          <div className="mb-6">
+            <h3 className="font-medium mb-2">Categories</h3>
+            <div className="space-y-2">
+              {["men", "women", "kids", "baby"].map((catego) => (
+                <label key={catego} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={catego === category}
+                    onClick={() => handleCategoryCheck(catego)}
+                    name={catego}
+                    className="rounded border-gray-300"
+                  />
+                  <span className=" capitalize">{catego}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          {/* , */}
+          {/* Sizes */}
+          <div className="mb-6">
+            <h3 className="font-medium mb-2">Size</h3>
+            <div className="space-y-2">
+              {["XXXL", "XXL", "XL", "L", "M", "S", "XS"].map((s) => (
+                <label key={s} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={s === size}
+                    onChange={() => handleSizeCheck(s)}
+                    className="rounded border-gray-300"
+                  />
+                  <span>{s}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          {/* Price Range */}
+          <div className="mb-6">
+            <h3 className="font-medium mb-2">Price Range</h3>
+            <div className="space-y-2">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={price === "under-500"}
+                  onChange={() => handlePriceCheck("under-500")}
+                  className="rounded border-gray-300"
+                />
+                <span>Under ₹500</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={price === "500-1000"}
+                  onChange={() => handlePriceCheck("500-1000")}
+                  className="rounded border-gray-300"
+                />
+                <span>₹500 - ₹1000</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={price === "over-1000"}
+                  onChange={() => handlePriceCheck("over-1000")}
+                  className="rounded border-gray-300"
+                />
+                <span>Over ₹1000</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="w-[calc(100%-260px)] min-h-screen ">
+          {/* Sort Section */}
+          <div className="sticky top-0 z-10 bg-white border-b p-4">
+            <div className="flex justify-between items-center">
+              <span>24 Products</span>
+              <select
+                value={sort}
+                onChange={(e) => handleSort(e.target.value)}
+                className="border rounded-md px-3 py-1.5"
+              >
+                <option value={"lastest"}>Latest</option>
+                <option value={"asc"}>Price: Low to High</option>
+                <option value={"desc"}>Price: High to Low</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Products Grid */}
+          <div className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {products.map((product) => (
+              <Products key={product._id} product={product} />
+            ))}
+          </div>
         </div>
       </div>
     </div>

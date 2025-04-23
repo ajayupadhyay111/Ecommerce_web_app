@@ -9,6 +9,7 @@ router.route("/newProduct").post(upload.array("images",4), authenticateToken,adm
 router.route("/updateProduct/:id").put(upload.array("images",4),authenticateToken,productController.updateProduct)
 router.route("/deleteProduct/:id").delete(authenticateToken,productController.deleteProduct)
 router.route("/getProducts").get(authenticateToken,productController.getProducts)
-router.route("/:id").get(authenticateToken,productController.getProductById)
-router.route("/filterProduct").get(authenticateToken,productController.filteredProduct)
+router.route("/filterProduct").get(productController.filteredProduct)
+router.route("/:id").get(productController.getProductById)
+
 export default router   
