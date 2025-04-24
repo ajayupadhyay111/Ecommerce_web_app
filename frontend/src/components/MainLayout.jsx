@@ -1,13 +1,16 @@
-import { getProfile } from "@/api/UserRelatedAPI";
+import { getCartPorducts, getProfile } from "@/api/UserRelatedAPI";
 import { setCredentials } from "@/store/features/auth/authSlice";
 import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import { addProductsToCart, totalProductQuantityInCart, totalProductsPrice } from "@/store/features/cart/cartSlice";
 
 const MainLayout = () => {
   const dispatch = useDispatch();
+  const {cartProduct} = useSelector(state=>state.cart)
+  const {userInfo} = useSelector(state=>state.auth)
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +29,17 @@ const MainLayout = () => {
     fetchUserProfile();
   }, []); // Empty dependency array - only run once
 
+  useEffect(()=>{
+    if(userInfo){
+      (async()=>{
+        const response = await getCartPorducts();
+        dispatch(addProductsToCart({cartData:response.data.products}))
+        dispatch(totalProductsPrice({totalPrice:response.data.totalPrice}))
+        dispatch(totalProductQuantityInCart({cartProductQuantity:response.data.productsQuantities}))
+      })()
+    }
+  },[userInfo])
+
   if (isLoading) {
     return (
       <div className="w-screen h-screen absolute top-0 flex justify-center items-center bg-gray-800/70">
@@ -34,6 +48,7 @@ const MainLayout = () => {
     );
   }
 
+  
   return (
     <>
       <Navbar />

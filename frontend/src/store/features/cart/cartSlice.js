@@ -1,38 +1,36 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  cartProduct:new Map(),
-  cartProductQuantity:0
+  cartProduct: {},
+  cartProductQuantity: 0,
+  totalProductsPrice: 0,
 };
 
 const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    addProductToCart: (state,action)=>{
-      const {id,size,quantity} = action.payload;
-      if(state.cartProduct.has(`{id,size}`)){
-        state.cartProduct[id] += 1;
-      }else{
-        state.cartProduct[id] = 1;
-      }
+    addProductsToCart: (state, action) => {
+      const { cartData } = action.payload;
+      state.cartProduct = cartData;
     },
-    increaseProductQuantity:(state,action)=>{
-      const {id,size} = action.payload;
-      state.cartProduct[id] += 1;
+    totalProductsPrice: (state, action) => {
+      const { totalPrice } = action.payload;
+      state.totalProductsPrice = totalPrice;
     },
-    decreaseProductQuantity:(state,action)=>{
-      const {id,size} = action.payload;
-      state.cartProduct[id] -= 1;
+    totalProductQuantityInCart: (state, action) => {
+      state.cartProductQuantity = action.payload.cartProductQuantity;
     },
-    totalProductQuantityInCart:(state)=>{
-      state.cartProductQuantity = Object.keys(state.cartProduct).length;
-    },
-    resetCart:(state)=>{
+    resetCart: (state) => {
       state.cartProduct = {};
-    }
+    },
   },
 });
 
-export const { addProductToCart,increaseProductQuantity,decreaseProductQuantity,resetCart } = cartSlice.actions;
+export const {
+  addProductsToCart,
+  totalProductsPrice,
+  totalProductQuantityInCart,
+  resetCart,
+} = cartSlice.actions;
 export default cartSlice.reducer;

@@ -8,7 +8,6 @@ const ProductFilterPage = () => {
   const params = useMemo(() => new URLSearchParams(queryString), [queryString]);
 
   const [category, setCategory] = useState(params.get("category") || "");
-  const [size, setSize] = useState(params.get("size") || "");
   const [price, setPrice] = useState(params.get("price") || "");
   const [sort, setSort] = useState(params.get("sort") || "");
   const [products, setProducts] = useState([]);
@@ -19,38 +18,30 @@ const ProductFilterPage = () => {
       setCategory("");
     } else {
       setCategory(catego);
-      navigate(`/filter?category=${catego}&size=${size}&price=${price}`);
+      navigate(`/filter?category=${catego}&price=${price}`);
     }
   };
-  const handleSizeCheck = (s) => {
-    if (s === size) {
-      setSize("");
-    } else {
-      setSize(s);
-    }
-    navigate(`/filter?category=${category}&size=${s}&price=${price}`);
-  };
+
   const handlePriceCheck = (p) => {
     if (p === price) {
       setPrice("");
     } else {
       setPrice(p);
     }
-    navigate(`/filter?category=${category}&size=${size}&price=${p}`);
+    navigate(`/filter?category=${category}&price=${p}`);
   };
 
   const handleSort = (value) => {
     setSort(value);
     navigate(
-      `/filter?category=${category}&size=${size}&price=${price}&sort=${value}`
+      `/filter?category=${category}&price=${price}&sort=${value}`
     );
   };
 
-  const fetchData = async (category, size, price, sort) => {
+  const fetchData = async (category, price, sort) => {
     try {
       const response = await getProductsForFilterPage(
         category,
-        size,
         price,
         sort
       );
@@ -59,10 +50,8 @@ const ProductFilterPage = () => {
       console.log(error);
     }
   };
-  useEffect(() => {
-    console.log(category,size,price,sort)
-    fetchData(category, size, price, sort);
-  }, [category, size, price, sort, params]);
+  useEffect(() => {fetchData(category, price, sort);
+  }, [category, price, sort, params]);
   return (
     <div className="w-full">
       <div className="w-full relative flex justify-end">
@@ -87,24 +76,7 @@ const ProductFilterPage = () => {
               ))}
             </div>
           </div>
-          {/* , */}
-          {/* Sizes */}
-          <div className="mb-6">
-            <h3 className="font-medium mb-2">Size</h3>
-            <div className="space-y-2">
-              {["XXXL", "XXL", "XL", "L", "M", "S", "XS"].map((s) => (
-                <label key={s} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={s === size}
-                    onChange={() => handleSizeCheck(s)}
-                    className="rounded border-gray-300"
-                  />
-                  <span>{s}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+        
           {/* Price Range */}
           <div className="mb-6">
             <h3 className="font-medium mb-2">Price Range</h3>

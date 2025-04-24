@@ -7,9 +7,8 @@ const Products = ({ product }) => {
   const [hoveredId, setHoveredId] = useState(null);
   const [favorites, setFavorites] = useState(new Set());
   const navigate = useNavigate();
-  console.log(product)
   return (
-    <div className="w-full p-4 h-full">
+    <div className="w-[270px] p-4 h-full">
       <div
         key={product._id}
         onClick={() => navigate("/product/" + product._id)}
@@ -63,10 +62,11 @@ const Products = ({ product }) => {
             <p className="font-bold text-xl">₹{product.price}</p>
           </div>
         </div>
-        <div className="p-4 flex flex-col gap-2">
+        <div className="p-4 flex flex-col">
           <h1 className="text-lg font-semibold">{product.name}</h1>
-          <button className="w-full py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
-            Add to Cart
+          <h1 className="text-xs text-gray-500 mb-2">{product.brand}</h1>
+          <button onClick={()=>addProductToCart(product._id)} className="w-full py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+            View
           </button>
         </div>
       </div>

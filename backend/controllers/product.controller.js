@@ -140,31 +140,34 @@ export const productController = {
   },
   filteredProduct: async (request, response, next) => {
     try {
-      const { category, size, price, sort } = request.query;
+      const { category, price, sort } = request.query;
 
-      const products = await productModel.find({
-        ...(category && { category }),
-        ...(size && { sizes: size }),
-        ...(price &&
+      const products = await productModel
+        .find({
+          ...(category && { category }),
+          ...(price &&
+            (() => {
+              const [prefix, value] = price.split("-");
+              const num = Number(value);
+              if (prefix === "under" && !isNaN(num))
+                return { price: { $lte: num } };
+              if (prefix === "over" && !isNaN(num))
+                return { price: { $gte: num } };
+
+              const [min, max] = [Number(prefix), num];
+              if (!isNaN(min) && !isNaN(max))
+                return { price: { $gte: min, $lte: max } };
+
+              return {};
+            })()),
+        })
+        .sort(
           (() => {
-            const [prefix, value] = price.split("-");
-            const num = Number(value);
-            if (prefix === "under" && !isNaN(num))
-              return { price: { $lte: num } };
-            if (prefix === "over" && !isNaN(num))
-              return { price: { $gte: num } };
-
-            const [min, max] = [Number(prefix), num];
-            if (!isNaN(min) && !isNaN(max))
-              return { price: { $gte: min, $lte: max } };
-
-            return {};
-          })()),
-      }).sort((()=>{
-        if(sort === "asc") return {price:1}
-        if(sort === "desc") return {price:-1}
-        if(sort === "latest") return {createdAt:-1}
-      })());
+            if (sort === "asc") return { price: 1 };
+            if (sort === "desc") return { price: -1 };
+            if (sort === "latest") return { createdAt: -1 };
+          })()
+        );
       response.status(200).json({ products });
     } catch (error) {
       next(error);

@@ -145,7 +145,7 @@ const Navbar = React.memo(() => {
             {authenticated ? (
               <div className="flex items-center space-x-4">
                 {/* // cart button */}
-                <Drawer direction="right">
+                <Drawer open={openDrawer} onOpenChange={setOpenDrawer}  direction="right">
                   <DrawerTrigger asChild>
                     <button className="relative transition-all duration-300 hover:scale-110">
                       <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-200" />

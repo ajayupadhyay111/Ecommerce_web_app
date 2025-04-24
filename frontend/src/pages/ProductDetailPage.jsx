@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import Heart from "@/lib/heart";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-import {
-  addProductInCart,
-  getProductById,
-} from "@/api/UserRelatedAPI";
+import { addProductInCart, getProductById } from "@/api/UserRelatedAPI";
 import toast from "react-hot-toast";
+import {
+  addProductsToCart,
+  totalProductQuantityInCart,
+  totalProductsPrice,
+} from "@/store/features/cart/cartSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -17,35 +20,82 @@ const ProductDetailPage = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState([]);
- 
+  const dispatch = useDispatch();
+  const location = useLocation();
+  const { cartProduct } = useSelector((state) => state.cart);
+  const [productIsAddedToCart, setProductIsAddedToCart] = useState(false);
+  const { size, quantities } = location.state || {};
+  useEffect(() => {
+    window.scrollTo(0, 0);
 
+    if (cartProduct.length > 0)
+      setProductIsAddedToCart(
+        cartProduct.some((value) => value.productId._id === id)
+      );
+    setSelectedSize(size || selectedSize);
+    setQuantity(quantities || quantity);
+  }, [id, size]);
   useEffect(() => {
     (async () => {
       const response = await getProductById(id);
       setProduct(response.data.product);
     })();
-  }, []);
+  }, [id, cartProduct]);
 
-  console.log(product)
+  const dispatchFunction = (response) => {
+    console.log(response);
+    dispatch(addProductsToCart({ cartData: response.data.cart.products }));
+    dispatch(totalProductsPrice({ totalPrice: response.data.cart.totalPrice }));
+    dispatch(
+      totalProductQuantityInCart({
+        cartProductQuantity: response.data.productsQuantities,
+      })
+    );
+  };
 
   const handleAddToCart = async (id) => {
     if (!selectedSize) {
       toast.error("Please select a size");
       return;
     }
-    
-    // const response = await addProductInCart({id,size:selectedSize,quantity})
-    // dispatch(addProductToCart({ id, size: selectedSize, quantity }));
+    const response = await addProductInCart({
+      id,
+      size: selectedSize,
+      quantity,
+      price: product.price,
+      type: "",
+    });
+    toast.success("Product added to cart");
+    dispatchFunction(response);
   };
 
-  const handleQuantityChange = (type) => {
-    if (type === "increase" && quantity<product.stock) {
+  const handleQuantityChange = async (type) => {
+    if (!selectedSize) {
+      toast.error("Please select a size");
+      return;
+    }
+    if (type === "increase" && quantity < product.stock) {
       setQuantity((prev) => prev + 1);
+      const response = await addProductInCart({
+        id,
+        size: selectedSize,
+        quantity: quantity + 1,
+        price: product.price,
+        type: "increase",
+      });
+      dispatchFunction(response);
     } else if (type === "decrease" && quantity > 1) {
       setQuantity((prev) => prev - 1);
+      const response = await addProductInCart({
+        id,
+        size: selectedSize,
+        quantity,
+        price: product.price,
+        type: "decrease",
+      });
+      dispatchFunction(response);
     }
   };
-
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:mt-0 mt-28">
@@ -81,12 +131,18 @@ const ProductDetailPage = () => {
             </div>
           </div>
           <div className="flex gap-4 mt-6">
-            <button
-              onClick={() => handleAddToCart(id)}
-              className="flex-1 bg-orange-500 text-white py-4 rounded-lg font-semibold hover:bg-orange-600"
-            >
-              ADD TO CART
-            </button>
+            {productIsAddedToCart ? (
+              <button className="flex-1 flex items-center justify-center gap-4 bg-blue-500 text-white py-4 rounded-lg font-semibold opacity-60">
+                ADDED <Check />
+              </button>
+            ) : (
+              <button
+                onClick={() => handleAddToCart(id)}
+                className="flex-1 bg-blue-500 text-white py-4 rounded-lg font-semibold hover:bg-blue-600"
+              >
+                ADD TO CART
+              </button>
+            )}
             <button
               onClick={() => setIsFavorite(!isFavorite)}
               className="p-4 border-2 rounded-lg hover:bg-gray-50"
